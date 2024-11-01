@@ -1,0 +1,38 @@
+{
+  "name": "chanadmin",
+  "version": "0.0.1",
+  "description": "simple chat bot to amdinistrate channels",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "dev": "node --env-file=.env ./build/server.js",
+    "start": "tsc && npm run dev"
+  },
+  "keywords": [
+    "bot",
+    "telegram",
+    "chat",
+    "grammy"
+  ],
+  "author": "Dukobpa3",
+  "license": "ISC",
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "grammy": "^1.31.0",
+    "mime-types": "^2.1.35",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/mime-types": "^2.1.4",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.8.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}
