@@ -36,7 +36,7 @@ export class DBot {
         let text2 = convertUlyssesToTelegramHtml(text)
         console.log("Trying to send:", text2);
         await this.bot.api
-            .sendMessage(-1002172392602, text2, {parse_mode: "HTML"})
+            .sendMessage(-1002399074043, text2, {parse_mode: "HTML"})
             .then((message) => {
                 console.log(message.from, message.chat, message.message_id);
             })
@@ -112,7 +112,7 @@ function escapeForTelegramMarkdown(input: string): string {
 
 function convertUlyssesToTelegramHtml(input: string): string {
     return input
-        .replace(/>(.*?)\n/g, (match, quote) => {
+        .replace(/^>(.*?)\n/g, (match, quote) => {
             return `<blockquote>${escapeHtml(quote)}</blockquote>\n`
         }) // Цитата
         .replace(/#+(.*?)\n/g, '<strong>$1</strong>\n') // Заголовок
