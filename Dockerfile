@@ -15,4 +15,6 @@ COPY --from=builder /app/build ./build
 COPY package*.json ./
 RUN npm install --production
 
+ENV NODE_ENV=production
+
 CMD ["node", "build/server.js"]

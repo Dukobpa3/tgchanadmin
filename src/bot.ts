@@ -1,5 +1,5 @@
 import {Bot, GrammyError, HttpError} from "grammy";
-import {Config} from "../server"
+import {Config} from "./config";
 
 export class DBot {
     bot: Bot

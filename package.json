@@ -1,8 +1,8 @@
 {
-  "name": "chanadmin",
-  "version": "0.0.1",
+  "name": "ulysses-tg",
+  "version": "0.1.0",
   "description": "simple chat bot to amdinistrate channels",
-  "main": "bot.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
@@ -12,11 +12,13 @@
   "keywords": [
     "bot",
     "telegram",
+    "ulysses",
+    "markdon",
     "chat",
     "grammy"
   ],
   "author": "Dukobpa3",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "adm-zip": "^0.5.16",
     "cors": "^2.8.5",

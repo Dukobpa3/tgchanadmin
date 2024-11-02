@@ -1,0 +1,13 @@
+services:
+  ulysses-tg:
+    image: ghcr.io/dukobpa3/ulysses-tg:latest
+    container_name: ulysses-tg
+    user: "1000:1000"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/config.yml:/app/config.yml
+      - ./data/uploads:/app/uploads
+    environment:
+      - BOT_TOKEN=XXXXXXXX:JHKHJkjhg3gjhgJHGJHG # Change to your own
+    restart: unless-stopped
