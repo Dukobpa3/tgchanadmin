@@ -1,0 +1,9 @@
+collection:
+  my: # tag, will be shown in Shortcut
+    channel: -xxxxxxxxxxxxxx # Channel ID
+  bhl:
+    channel: -xxxxxxxxxxxxxx # Channel ID
+    group: -xxxxxxxxxxxxxxx # Related group ID
+  mbn:
+    channel: -xxxxxxxxxxxxxxx
+    group: -xxxxxxxxxxxxxx
