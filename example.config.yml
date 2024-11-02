@@ -1,9 +1,4 @@
-collection:
-  my: # tag, will be shown in Shortcut
-    channel: -xxxxxxxxxxxxxx # Channel ID
-  bhl:
-    channel: -xxxxxxxxxxxxxx # Channel ID
-    group: -xxxxxxxxxxxxxxx # Related group ID
-  mbn:
-    channel: -xxxxxxxxxxxxxxx
-    group: -xxxxxxxxxxxxxx
+collection: # You can add your own names per ID, they will be shown in Shortcut
+  my_chan: -xxxxxxxxxxxxxx # Channel ID
+  bhl_channel: -xxxxxxxxxxxxxx # Channel ID
+  bhl_group: -xxxxxxxxxxxxxxx # Related group ID
