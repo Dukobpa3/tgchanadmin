@@ -17,4 +17,6 @@ RUN npm ci --only=production && rm -rf /var/cache/apk/*
 
 ENV NODE_ENV=production
 
+ENV NODE_ENV=production
+
 CMD ["node", "build/server.js"]
