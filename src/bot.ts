@@ -1,5 +1,5 @@
 import {Bot, GrammyError, HttpError} from "grammy";
-import {Config} from "./config";
+import {Config} from "../config";
 
 export class DBot {
     bot: Bot
@@ -48,13 +48,10 @@ export class DBot {
 
         let text2 = convertUlyssesToTelegramHtml(text)
         console.log("Trying to send:", text2);
-        await this.bot.api
+        return this.bot.api
             .sendMessage(id, text2, {parse_mode: "HTML"})
             .then((message) => {
                 console.log(message.from, message.chat, message.message_id);
-            })
-            .catch((err) => {
-                console.log(err);
             });
     }
 }
