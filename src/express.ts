@@ -41,10 +41,9 @@ export class Server {
         this.app.post("/api",
             upload.single('data'),
             (req, res) => this.create(req, res));
-        //this.router.post("/", this.controller.create);
 
         // Retrieve all Posts
-        this.app.get("/api", this.findAll);
+        this.app.get("/api", (req, res) => this.findAll(req, res));
 
         // Retrieve a single Post with id
         this.app.get("/api:id", this.findOne);
@@ -90,9 +89,8 @@ export class Server {
             zipEntries.forEach(entry => {
                 console.log("Unzipped entry", entry.entryName)
                 if (!entry.isDirectory) {
-                    //const mimeType = mime.lookup(fileName);
-                    if (entry.name === "text.md") {
-
+                    const mimeType = mime.lookup(entry.name);
+                    if (mimeType && (mimeType as string).startsWith("text/")) {
                         content = zip.readAsText(entry);
                     }
                     // else if(mimeType.) { if media
@@ -121,9 +119,9 @@ export class Server {
 
     async findAll(req: Request, res: Response) {
         try {
-            res.status(200).json({
-                message: "findAll OK"
-            });
+            res.status(200).json(
+                Object.keys(this.bot.config.collection)
+            );
         } catch (err) {
             res.status(500).json({
                 message: "Internal Server Error!"

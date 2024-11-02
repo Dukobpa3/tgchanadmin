@@ -22,8 +22,6 @@ export class DBot {
             await this.bot.api.sendMessage(this.config.collection.my.channel, 'Тестове повідомлення!');
         });
 
-        //this.bot.on("message", (ctx) => ctx.reply("Got another message!"));
-
         this.bot.catch((err) => {
             const ctx = err.ctx;
             console.error(`Error while handling update ${ctx.update.update_id}:`);
@@ -55,7 +53,7 @@ export class DBot {
         let text2 = convertUlyssesToTelegramHtml(text)
         console.log("Trying to send:", text2);
         await this.bot.api
-            .sendMessage(-1001493200026, text2, {parse_mode: "HTML"})
+            .sendMessage(id, text2, {parse_mode: "HTML"})
             .then((message) => {
                 console.log(message.from, message.chat, message.message_id);
             })
@@ -67,8 +65,14 @@ export class DBot {
 
 function convertUlyssesToTelegramHtml(input: string): string {
     return input
-        .replace(/^>(.*?)\n/g, (match, quote) => {
-            return `<blockquote>${escapeHtml(quote)}</blockquote>\n`
+        .replace(/```(.*?)\n([\s\S]*?)```/g, (match, lang, code) => {
+            return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
+        }) // Code block
+        .replace(/`(.*?)`/g, (match, code) => {
+            return `<code>${escapeHtml(code)}</code>`
+        }) // Inline code
+        .replace(/(^|\n)(>.*?\n)+/g, (match) => {
+            return `<blockquote>${escapeHtml(match.replace(/^> ?/gm, '').trim())}</blockquote>\n`
         }) // Quote
         .replace(/#+(.*?)\n/g, '<strong>$1</strong>\n') // Headers
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
@@ -76,17 +80,13 @@ function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
         .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
         .replace(/\|\|(.*?)\|\|/g, '<span class="tg-spoiler">$1</span>') // Spoiler
-        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
-        .replace(/```(.*?)\n([\s\S]*?)```/g, (match, lang, code) => {
-            return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
-        }) // Code block
-        .replace(/`(.*?)`/g, (match, code) => {
-            return `<code>${escapeHtml(code)}</code>`
-        }); // Inline code
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>'); // Link
+
 }
 
 function escapeHtml(input: string): string {
-    return input.replace(/</g, '&lt;') // Change < to &lt;
-        .replace(/>/g, '&gt;') // Change > to &gt;
-        .replace(/&/g, '&amp;'); // Change & to &amp;
+    return input
+        .replace(/&/g, '&amp;') // Change & to &amp;
+        .replace(/</g, '&lt;') // Change < to &lt;
+        .replace(/>/g, '&gt;'); // Change > to &gt;
 }
