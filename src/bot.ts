@@ -65,6 +65,9 @@ export class DBot {
 
 function convertUlyssesToTelegramHtml(input: string): string {
     return input
+        .replace(/~(.*?)~/g, (match, code) => {
+            return `<pre>${escapeHtml(code)}</pre>`
+        }) // Preformat
         .replace(/```(.*?)\n([\s\S]*?)```/g, (match, lang, code) => {
             return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
         }) // Code block
@@ -72,7 +75,7 @@ function convertUlyssesToTelegramHtml(input: string): string {
             return `<code>${escapeHtml(code)}</code>`
         }) // Inline code
         .replace(/(^|\n)(>.*?\n)+/g, (match) => {
-            return `<blockquote>${escapeHtml(match.replace(/^> ?/gm, '').trim())}</blockquote>\n`
+            return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
         }) // Quote
         .replace(/#+(.*?)\n/g, '<strong>$1</strong>\n') // Headers
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
@@ -80,7 +83,9 @@ function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
         .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
         .replace(/\|\|(.*?)\|\|/g, '<span class="tg-spoiler">$1</span>') // Spoiler
-        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>'); // Link
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
+        .replace(/\n\n\n/g, '\n\n')
+        .replace(/<\/pre>\n\n/g, '</pre>\n'); // Link
 
 }
 
