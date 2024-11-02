@@ -8,7 +8,7 @@ import mime from 'mime-types';
 const storage = multer.memoryStorage();
 const upload = multer({storage});
 
-export class Server {
+export class DServer {
 
     app: Application = express();
     bot: DBot;

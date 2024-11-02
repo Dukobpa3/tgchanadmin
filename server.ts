@@ -1,12 +1,13 @@
-import {Server, DBot} from "./src/";
-import {config, env} from "./src/config";
+import {DBot} from "./src/bot.js";
+import {DServer} from "./src/express.js";
+import {config, env} from "./src/config.js";
+
 
 const dbot: DBot = new DBot(env.botToken, config);
 dbot.Run()
 
 
-
-const server: Server = new Server(env.port, dbot);
+const server: DServer = new DServer(env.port, dbot);
 server.Run()
 
 

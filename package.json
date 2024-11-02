@@ -2,11 +2,12 @@
   "name": "ulysses-tg",
   "version": "0.1.0",
   "description": "simple chat bot to amdinistrate channels",
-  "main": "server.js",
+  "main": "server.ts",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "dev": "node --env-file=.env ./build/server.js",
+    "dev": "node --env-file=.env --trace-deprecation --trace-warnings ./build/server.js",
     "start": "tsc && npm run dev"
   },
   "keywords": [
@@ -22,7 +23,7 @@
   "dependencies": {
     "adm-zip": "^0.5.16",
     "cors": "^2.8.5",
-    "express": "^4.21.1",
+    "express": "^5.0.1",
     "grammy": "^1.31.0",
     "js-yaml": "^4.1.0",
     "mime-types": "^2.1.35",
