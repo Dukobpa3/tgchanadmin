@@ -17,14 +17,8 @@ const PORT: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 const server: Server = new Server(PORT, dbot);
 server.Run()
 
-
-interface ChannelGroup {
-    channel: number;
-    group: number;
-}
-
 interface Collection {
-    [key: string]: ChannelGroup;
+    [key: string]: string;
 }
 
 export interface Config {

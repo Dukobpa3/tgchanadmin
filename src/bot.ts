@@ -7,7 +7,7 @@ export class DBot {
 
     constructor(BOT_TOKEN: string, config: Config) {
         if (config) {
-            console.log(config.collection.bhl.channel);
+            console.log(`Registered ${Object.keys(config.collection).length} channels amount`);
         }
 
         this.config = config;
@@ -17,10 +17,6 @@ export class DBot {
 
     private initialize(): void {
         this.bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
-
-        this.bot.command('send', async (ctx) => {
-            await this.bot.api.sendMessage(this.config.collection.my.channel, 'Тестове повідомлення!');
-        });
 
         this.bot.catch((err) => {
             const ctx = err.ctx;
@@ -48,7 +44,7 @@ export class DBot {
         if (text === undefined) return
         if (key === undefined) return
 
-        const id = this.config.collection[key].channel
+        const id = this.config.collection[key]
 
         let text2 = convertUlyssesToTelegramHtml(text)
         console.log("Trying to send:", text2);
