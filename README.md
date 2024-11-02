@@ -13,6 +13,8 @@ This project is a Telegram bot designed for publishing richly formatted text, pa
 
 ## Installation
 
+### Manual/Local/Dev
+
 1. Clone the repository.
 2. Install dependencies:
     ```bash
@@ -24,6 +26,34 @@ This project is a Telegram bot designed for publishing richly formatted text, pa
     npm start
     ```
 5. Add the Companion Shortcut to your device and configure it to interact with the server.
+
+### Docker
+
+```bash
+docker run -d \
+  --user 1000:1000 \
+  -p 8080:8080 \
+  -v ./data/config.yml:/app/config.yml \
+  ghcr.io/dukobpa3/ulysses-tg:latest
+```
+
+#### Compose file
+
+```yaml
+services:
+  ulysses-tg:
+    image: ghcr.io/dukobpa3/ulysses-tg:latest
+    container_name: ulysses-tg
+    user: "1000:1000"         
+    ports:
+      - "8080:8080"           
+    volumes:
+      - ./data/config.yml:/app/config.yml 
+    environment:
+      - BOT_TOKEN=XXXXXXXXXX:kjjhkjhkjhfakjdg
+      - NODE_ENV=production
+    restart: unless-stopped
+```
 
 ## How It Works
 
