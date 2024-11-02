@@ -70,10 +70,10 @@ function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/`(.*?)`/g, (match, code) => {
             return `<code>${escapeHtml(code)}</code>`
         }) // Inline code
-        .replace(/(^|\n)(>.*?\n)+/g, (match) => {
+        .replace(/[^|\n](>.*?\n)+/g, (match) => {
             return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
         }) // Quote
-        .replace(/(^|\n)#+(.*?)\n/g, '<strong>$1</strong>\n') // Headers
+        .replace(/[^|\n]#+(.*?)\n/g, '<strong>$1</strong>\n') // Headers
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
         .replace(/__(.*?)__/g, '<u>$1</u>') // Underline
         .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
