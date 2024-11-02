@@ -73,7 +73,7 @@ function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/(^|\n)(>.*?\n)+/g, (match) => {
             return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
         }) // Quote
-        .replace(/#+(.*?)\n/g, '<strong>$1</strong>\n') // Headers
+        .replace(/(^|\n)#+(.*?)\n/g, '<strong>$1</strong>\n') // Headers
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
         .replace(/__(.*?)__/g, '<u>$1</u>') // Underline
         .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
