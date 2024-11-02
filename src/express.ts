@@ -103,7 +103,7 @@ export class Server {
 
             console.log("Sending content:", content)
             this.bot
-                .SendMessage(content)
+                .SendMessage(content, req.body.channel)
                 .then(() => {
                     console.log("sent to bot");
                     res.status(201).json({
