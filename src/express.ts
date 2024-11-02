@@ -42,7 +42,7 @@ export class Server {
             upload.single('data'),
             (req, res) => this.create(req, res));
 
-        // Retrieve all Posts
+        // Retrieve all available channels
         this.app.get("/api", (req, res) => this.findAll(req, res));
 
         // Retrieve a single Post with id
