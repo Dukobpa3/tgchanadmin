@@ -23,7 +23,7 @@ export class Server {
 
     private config(): void {
         const corsOptions: CorsOptions = {
-            origin: "http://localhost:8081"
+            origin: "http://0.0.0.0:8081"
         };
 
         this.app.use(cors(corsOptions));
@@ -57,7 +57,7 @@ export class Server {
 
     Run() {
         const port = this.port
-        return this.app.listen(port, "localhost", function () {
+        return this.app.listen(port, "0.0.0.0", function () {
             console.log(`Server is running on port ${port}.`);
         })
             .on("error", (err: any) => {
