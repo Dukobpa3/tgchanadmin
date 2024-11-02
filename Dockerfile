@@ -34,4 +34,4 @@ ENV NODE_ENV=production
 EXPOSE 8080
 
 # Start the application
-CMD ["node", "--env-file=.env", "./build/server.js"]
+CMD ["node", "./build/server.js"]
