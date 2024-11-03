@@ -61,6 +61,26 @@ services:
 2. The Shortcut checks the available channels/chats and lets you select the destination.
 3. The bot processes the text, applies formatting, and publishes it to Telegram.
 
+## Configuration
+
+```yaml
+collection: # You can add your own names per ID, they will be shown in Shortcut
+  my_chan: -xxxxxxxxxxxxxx # Channel ID
+  bhl_channel: -xxxxxxxxxxxxxx # Channel ID
+  bhl_group: -xxxxxxxxxxxxxxx # Related group ID
+
+format: # FineTune your presentation
+  # Here is some examples. Copy and paste what do you like
+  # Or leave it empty for default '–' for lists and clean header
+  #  ◆, ✦, ✪, ♜, ▸, ►, ▪️, ▹, ➤, ➥, •, ○, ✦, ⊙, –, °, →, ⇨, ⤷
+  list:
+    first: ○
+    second: •
+  header:
+    first: ♜
+    second: ▹
+```
+
 ## Future Plans
 
 - Add media file support.

@@ -4,11 +4,27 @@ import {DBot} from "./bot";
 import multer from "multer";
 import AdmZip from "adm-zip";
 import mime from 'mime-types';
+import fs from "fs";
+import {env} from "../config.js";
 
-const storage = multer.memoryStorage();
+const memoryStorage = multer.memoryStorage();
+const diskStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = env.botUploadPath;
+        fs.mkdirSync(uploadPath, {recursive: true});
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        const safeName = `${Date.now()}-${originalName}`;
+        cb(null, safeName);
+    }
+});
+
+const storage = env.botUploadPath === "" ? memoryStorage : diskStorage;
 const upload = multer({storage});
 
-export class Server {
+export class DServer {
 
     app: Application = express();
     bot: DBot;
@@ -38,8 +54,7 @@ export class Server {
             });
 
         // Create a new Post
-        this.app.post("/api",
-            upload.single('data'),
+        this.app.post("/api", upload.single('data'),
             (req, res) => this.create(req, res));
 
         // Retrieve all available channels
@@ -71,7 +86,6 @@ export class Server {
 
 
     async create(req: Request, res: Response) {
-        console.log("Enter to handler", !!this.bot);
         console.log("Received data is:", req.body)
 
         if (!req.file)
@@ -79,7 +93,12 @@ export class Server {
         else {
             console.log("Received file is:", req.file.size, req.file.originalname, req.file.mimetype)
 
-            const fileBuffer = req.file.buffer;
+            let fileBuffer;
+            if (env.botUploadPath === "") {
+                fileBuffer = req.file.buffer;
+            } else {
+                fileBuffer = fs.readFileSync(req.file.path);
+            }
 
             const zip = new AdmZip(fileBuffer);
             const zipEntries = zip.getEntries();
@@ -110,8 +129,11 @@ export class Server {
                     });
                 })
                 .catch((err) => {
+                    console.log(err);
                     res.status(500).json({
-                        message: "Internal Server Error!"
+                        code: err.error_code,
+                        name: err.name,
+                        description: err.description
                     })
                 });
         }

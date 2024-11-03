@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - develop
   release:
     types: [published]
 
@@ -25,8 +26,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set Docker tag
+        id: docker-tag
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/master" ]; then
+            echo "tag=latest" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+            echo "tag=develop" >> $GITHUB_ENV
+          fi
+
       - name: Build the Docker image
-        run: docker build -t ghcr.io/${{ github.actor }}/ulysses-tg:latest .
+        run: docker build -t ghcr.io/${{ github.actor }}/ulysses-tg:${{ env.tag }} .
 
       - name: Push the Docker image
-        run: docker push ghcr.io/${{ github.actor }}/ulysses-tg:latest
+        run: docker push ghcr.io/${{ github.actor }}/ulysses-tg:${{ env.tag }}
