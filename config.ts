@@ -9,8 +9,19 @@ interface Collection {
     [key: string]: string;
 }
 
+interface FormatList {
+    first: string;
+    second: string;
+}
+
+interface Format {
+    list: FormatList;
+    header: FormatList;
+}
+
 export interface Config {
     collection: Collection;
+    format: Format;
 }
 
 interface Env {
