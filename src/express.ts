@@ -120,7 +120,7 @@ export class DServer {
 
             console.log("Sending content:", content)
             this.bot
-                .SendMessage(content, req.body.channel)
+                .SendMessage(content, parseInt(req.body.channel), parseInt(req.body.message))
                 .then((message) => {
                     console.log("sent to bot");
                     if (message === true) res.status(201).json({
@@ -145,7 +145,7 @@ export class DServer {
     async findAll(req: Request, res: Response) {
         try {
             res.status(200).json(
-                Object.keys(this.bot.config.collection)
+                this.bot.config.collection
             );
         } catch (err) {
             res.status(500).json({
