@@ -40,24 +40,43 @@ export class DBot {
         this.bot.stop()
     }
 
-    async SendMessage(text: string | undefined, key: string | undefined) {
+    async SendMessage(text: string | undefined, channel: number | undefined, message: number|undefined) {
         if (text === undefined) return
-        if (key === undefined) return
-
-        const id = this.config.collection[key]
+        if (channel === undefined) return
 
         let text2 = convertUlyssesToTelegramHtml(text)
-        console.log("Trying to send:", text2);
-        return this.bot.api
-            .sendMessage(id, text2, {parse_mode: "HTML"})
-            .then((message) => {
-                console.log(message.from, message.chat, message.message_id);
-            });
+        console.log("Trying to send:", channel, message, text2);
+
+        if (message) {
+            console.log("Trying to edit:", channel, message);
+            return this.bot.api
+                .editMessageText(channel, message, text2, {parse_mode: "HTML"})
+                .then((resp) => {
+                    console.log();
+                    return resp;
+                });
+        } else {
+            return this.bot.api
+                .sendMessage(channel, text2, {parse_mode: "HTML"})
+                .then((message) => {
+                    console.log(message.from, message.chat, message.message_id);
+                    return message;
+                });
+        }
     }
+}
+
+function getMessageId(text: string, chat: string): string {
+    const reg = new RegExp(`<!--.*?ulysses-tg\\s+${chat}:(\\d+).*?-->`);
+    const match = text.match(reg)
+    console.log("Message id match:", match)
+    return match ? match[1] : "";
 }
 
 function convertUlyssesToTelegramHtml(input: string): string {
     return input
+        .replace(/\s*<!--.*ulysses-tg.*-->\s*/g, "\n") // clean technical information
+
         .replace(/~(.*?)~/g, (match, code) => {
             return `<pre>${escapeHtml(code)}</pre>`
         }) // Preformat
@@ -77,14 +96,14 @@ function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
         .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
 
-        .replace(/(^|\n)#{2,}\s(.*?)\n/g, (match, p1, p2) => {
+        .replace(/(^|\n)#{2,}[ \t](.*?)\n/g, (match, p1, p2) => {
             return `\n<strong>${markP2(p2)}</strong>\n`
         }) // Header 2
-        .replace(/(^|\n)#\s(.*?)\n/g, (match, p1, p2) => {
+        .replace(/(^|\n)#[ \t](.*?)\n/g, (match, p1, p2) => {
             return `\n<strong>${markP1(p2)}</strong>\n`
         }) // Header 1
 
-        .replace(/(^|\n)(\s+[*-].*?)(?=\n)/g, (match, p1, p2) => {
+        .replace(/(^|\n)([ \t]+[*-].*?)(?=\n)/g, (match, p1, p2) => {
             return `\n   ${markList2(p2)}`
         }) // List 2
         .replace(/(^|\n)([*-].*?)(?=\n)/g, (match, p1, p2) => {
@@ -93,8 +112,10 @@ function convertUlyssesToTelegramHtml(input: string): string {
 
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
 
-        .replace(/\n\n\n/g, '\n\n') // Prune new lines
-        .replace(/<\/pre>\n\n/g, '</pre>\n'); // Prune new lines
+        // Cleanup zone
+        .replace(/\n\n\n/g, '\n\n')
+        .replace(/<\/pre>\n\n/g, '</pre>\n')
+        .trim();
 
 }
 
@@ -106,12 +127,12 @@ function escapeHtml(input: string): string {
 }
 
 function markP1(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.first} `: ``;
+    const marker = config.format.header.first ? `${config.format.header.first} ` : ``;
     return `${marker}${input}`;
 }
 
 function markP2(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.second} `: ``;
+    const marker = config.format.header.first ? `${config.format.header.second} ` : ``;
     return `${marker}${input}`;
 }
 

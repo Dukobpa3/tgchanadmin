@@ -120,12 +120,15 @@ export class DServer {
 
             console.log("Sending content:", content)
             this.bot
-                .SendMessage(content, req.body.channel)
-                .then(() => {
+                .SendMessage(content, parseInt(req.body.channel), parseInt(req.body.message))
+                .then((message) => {
                     console.log("sent to bot");
-                    res.status(201).json({
-                        message: "create OK",
-                        reqBody: req.body
+                    if (message === true) res.status(201).json({
+                        ok: message,
+                    });
+                    else res.status(201).json({
+                        m: message?.message_id,
+                        c: message?.chat.id,
                     });
                 })
                 .catch((err) => {
@@ -142,7 +145,7 @@ export class DServer {
     async findAll(req: Request, res: Response) {
         try {
             res.status(200).json(
-                Object.keys(this.bot.config.collection)
+                this.bot.config.collection
             );
         } catch (err) {
             res.status(500).json({
