@@ -121,11 +121,14 @@ export class DServer {
             console.log("Sending content:", content)
             this.bot
                 .SendMessage(content, req.body.channel)
-                .then(() => {
+                .then((message) => {
                     console.log("sent to bot");
-                    res.status(201).json({
-                        message: "create OK",
-                        reqBody: req.body
+                    if (message === true) res.status(201).json({
+                        ok: message,
+                    });
+                    else res.status(201).json({
+                        m: message?.message_id,
+                        c: message?.chat.id,
                     });
                 })
                 .catch((err) => {
