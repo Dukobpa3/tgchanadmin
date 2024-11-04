@@ -1,16 +1,16 @@
 import {Bot, GrammyError, HttpError} from "grammy";
-import {config, Config} from "../config.js";
+import {config} from "../config.js";
+import {convertUlyssesToTelegramHtml} from "./parser.js";
+import {ContentType, TgData} from "./middleware.js";
 
 export class DBot {
     bot: Bot
-    config: Config
 
-    constructor(BOT_TOKEN: string, config: Config) {
+    constructor(BOT_TOKEN: string) {
         if (config) {
             console.log(`Registered ${Object.keys(config.collection).length} channels amount`);
         }
 
-        this.config = config;
         this.bot = new Bot(BOT_TOKEN);
         this.initialize();
     }
@@ -40,121 +40,48 @@ export class DBot {
         this.bot.stop()
     }
 
-    async SendMessage(text: string | undefined, channel: number | undefined, message: number | undefined, g?: boolean) {
-        if (text === undefined) return
-        if (channel === undefined) return
+    async SendMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
 
-        let text2 = convertUlyssesToTelegramHtml(text)
+        let text2 = convertUlyssesToTelegramHtml(tgData.content)
 
 
-        if (message) {
-            console.log("Trying to edit:", channel, message, g);
-            if (g) {
+        if (tgData.message) {
+            console.log("Trying to edit:", tgData.channel, tgData.message, tgData.contentType);
+            if (tgData.contentType > 0) {
                 return this.bot.api
-                    .editMessageCaption(channel, message, {parse_mode: "HTML", caption: text2})
-                    .then((resp) => {
-                        console.log();
-                        return resp;
-                    });
+                    .editMessageCaption(tgData.channel, tgData.message, {parse_mode: "HTML", caption: text2});
+
             } else {
                 return this.bot.api
-                    .editMessageText(channel, message, text2, {parse_mode: "HTML"})
-                    .then((resp) => {
-                        console.log();
-                        return resp;
-                    });
+                    .editMessageText(tgData.channel, tgData.message, text2, {parse_mode: "HTML"});
             }
         } else {
-            console.log("Trying to send:", channel, message, g);
-            return this.bot.api
-                .sendMessage(channel, text2, {parse_mode: "HTML"})
-                .then((message) => {
-                    console.log(message.from, message.chat, message.message_id);
-                    return message;
-                });
+            console.log("Trying to send:", tgData.channel, tgData.message, ContentType[tgData.contentType]);
+            switch (tgData.contentType) {
+                case ContentType.Text:
+                    return this.bot.api
+                        .sendMessage(tgData.channel, text2, {parse_mode: "HTML"});
+                case ContentType.Photo:
+                    return this.bot.api
+                        .sendPhoto(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
+                case ContentType.Video:
+                    return this.bot.api
+                        .sendVideo(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
+                case ContentType.Audio:
+                    return this.bot.api
+                        .sendAudio(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
+                case ContentType.Document:
+                    return this.bot.api
+                        .sendDocument(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
+                case ContentType.Group:
+                    tgData.media[0].caption = text2;
+                    return this.bot.api
+                        .sendMediaGroup(tgData.channel, tgData.media);
+            }
+
         }
     }
-}
 
-function getMessageId(text: string, chat: string): string {
-    const reg = new RegExp(`<!--.*?ulysses-tg\\s+${chat}:(\\d+).*?-->`);
-    const match = text.match(reg)
-    console.log("Message id match:", match)
-    return match ? match[1] : "";
-}
-
-function convertUlyssesToTelegramHtml(input: string): string {
-    return input
-        .replace(/\s*<!--.*ulysses-tg.*-->\s*/g, "\n") // clean technical information
-
-        .replace(/~(.*?)~/g, (match, code) => {
-            return `<pre>${escapeHtml(code)}</pre>`
-        }) // Preformat
-        .replace(/```(.*?)\n([\s\S]*?)```/g, (match, lang, code) => {
-            return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
-        }) // Code block
-        .replace(/`(.*?)`/g, (match, code) => {
-            return `<code>${escapeHtml(code)}</code>`
-        }) // Inline code
-        .replace(/(^|\n)(>.*?\n)+/g, (match) => {
-            return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
-        }) // Quote
-
-        .replace(/\|\|(.*?)\|\|/g, '<span class="tg-spoiler">$1</span>') // Spoiler
-        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
-        .replace(/__(.*?)__/g, '<u>$1</u>') // Underline
-        .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
-        .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
-
-        .replace(/(^|\n)#{2,}[ \t](.*?)\n/g, (match, p1, p2) => {
-            return `\n<strong>${markP2(p2)}</strong>\n`
-        }) // Header 2
-        .replace(/(^|\n)#[ \t](.*?)\n/g, (match, p1, p2) => {
-            return `\n<strong>${markP1(p2)}</strong>\n`
-        }) // Header 1
-
-        .replace(/(^|\n)([ \t]+[*-].*?)(?=\n)/g, (match, p1, p2) => {
-            return `\n   ${markList2(p2)}`
-        }) // List 2
-        .replace(/(^|\n)([*-].*?)(?=\n)/g, (match, p1, p2) => {
-            return `\n ${markList1(p2)}`
-        }) // List 1
-
-        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
-
-        // Cleanup zone
-        .replace(/\n\n\n/g, '\n\n')
-        .replace(/<\/pre>\n\n/g, '</pre>\n')
-        .trim();
-
-}
-
-function escapeHtml(input: string): string {
-    return input
-        .replace(/&/g, '&amp;') // Change & to &amp;
-        .replace(/</g, '&lt;') // Change < to &lt;
-        .replace(/>/g, '&gt;'); // Change > to &gt;
-}
-
-function markP1(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.first} ` : ``;
-    return `${marker}${input}`;
-}
-
-function markP2(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.second} ` : ``;
-    return `${marker}${input}`;
-}
-
-function markList1(input: string): string {
-    console.log("Editing List 1:", input)
-    const marker = config.format.list.first ?? `–`;
-    return input.replace(/^([-*])\s/g, `${marker} `);
-}
-
-function markList2(input: string): string {
-    console.log("Editing List 2:", input)
-    const marker = config.format.list.second ?? `–`;
-    return input
-        .replace(/^\s+([-*])\s/g, `${marker} `);
 }
