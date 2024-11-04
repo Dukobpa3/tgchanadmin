@@ -40,22 +40,32 @@ export class DBot {
         this.bot.stop()
     }
 
-    async SendMessage(text: string | undefined, channel: number | undefined, message: number|undefined) {
+    async SendMessage(text: string | undefined, channel: number | undefined, message: number | undefined, g?: boolean) {
         if (text === undefined) return
         if (channel === undefined) return
 
         let text2 = convertUlyssesToTelegramHtml(text)
-        console.log("Trying to send:", channel, message, text2);
+
 
         if (message) {
-            console.log("Trying to edit:", channel, message);
-            return this.bot.api
-                .editMessageText(channel, message, text2, {parse_mode: "HTML"})
-                .then((resp) => {
-                    console.log();
-                    return resp;
-                });
+            console.log("Trying to edit:", channel, message, g);
+            if (g) {
+                return this.bot.api
+                    .editMessageCaption(channel, message, {parse_mode: "HTML", caption: text2})
+                    .then((resp) => {
+                        console.log();
+                        return resp;
+                    });
+            } else {
+                return this.bot.api
+                    .editMessageText(channel, message, text2, {parse_mode: "HTML"})
+                    .then((resp) => {
+                        console.log();
+                        return resp;
+                    });
+            }
         } else {
+            console.log("Trying to send:", channel, message, g);
             return this.bot.api
                 .sendMessage(channel, text2, {parse_mode: "HTML"})
                 .then((message) => {

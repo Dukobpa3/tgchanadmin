@@ -120,7 +120,7 @@ export class DServer {
 
             console.log("Sending content:", content)
             this.bot
-                .SendMessage(content, parseInt(req.body.channel), parseInt(req.body.message))
+                .SendMessage(content, parseInt(req.body.channel), parseInt(req.body.message), req.body.media === "true")
                 .then((message) => {
                     console.log("sent to bot");
                     if (message === true) res.status(201).json({
