@@ -40,28 +40,24 @@ export class DBot {
         this.bot.stop()
     }
 
-    async SendMessage(text: string | undefined, key: string | undefined) {
+    async SendMessage(text: string | undefined, channel: number | undefined, message: number|undefined) {
         if (text === undefined) return
-        if (key === undefined) return
-
-        const id = this.config.collection[key]
-
-        const mId = getMessageId(text, id);
+        if (channel === undefined) return
 
         let text2 = convertUlyssesToTelegramHtml(text)
-        console.log("Trying to send:", text2);
+        console.log("Trying to send:", channel, message, text2);
 
-        if (mId !== "") {
-            console.log("Trying to edit:", id, mId);
+        if (message) {
+            console.log("Trying to edit:", channel, message);
             return this.bot.api
-                .editMessageText(id, parseInt(mId), text2, {parse_mode: "HTML"})
+                .editMessageText(channel, message, text2, {parse_mode: "HTML"})
                 .then((resp) => {
                     console.log();
                     return resp;
                 });
         } else {
             return this.bot.api
-                .sendMessage(id, text2, {parse_mode: "HTML"})
+                .sendMessage(channel, text2, {parse_mode: "HTML"})
                 .then((message) => {
                     console.log(message.from, message.chat, message.message_id);
                     return message;
@@ -100,14 +96,14 @@ function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
         .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
 
-        .replace(/(^|\n)#{2,}\s(.*?)\n/g, (match, p1, p2) => {
+        .replace(/(^|\n)#{2,}[ \t](.*?)\n/g, (match, p1, p2) => {
             return `\n<strong>${markP2(p2)}</strong>\n`
         }) // Header 2
-        .replace(/(^|\n)#\s(.*?)\n/g, (match, p1, p2) => {
+        .replace(/(^|\n)#[ \t](.*?)\n/g, (match, p1, p2) => {
             return `\n<strong>${markP1(p2)}</strong>\n`
         }) // Header 1
 
-        .replace(/(^|\n)(\s+[*-].*?)(?=\n)/g, (match, p1, p2) => {
+        .replace(/(^|\n)([ \t]+[*-].*?)(?=\n)/g, (match, p1, p2) => {
             return `\n   ${markList2(p2)}`
         }) // List 2
         .replace(/(^|\n)([*-].*?)(?=\n)/g, (match, p1, p2) => {
