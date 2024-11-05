@@ -22,14 +22,14 @@ export function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
         .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
 
-        .replace(/(^|\n)#{2,}\s(.*?)\n/g, (match, p1, p2) => {
+        .replace(/(^|\n)#{2,}[ \t](.*?)\n/g, (match, p1, p2) => {
             return `\n<strong>${markP2(p2)}</strong>\n`
         }) // Header 2
-        .replace(/(^|\n)#\s(.*?)\n/g, (match, p1, p2) => {
+        .replace(/(^|\n)#[ \t](.*?)\n/g, (match, p1, p2) => {
             return `\n<strong>${markP1(p2)}</strong>\n`
         }) // Header 1
 
-        .replace(/(^|\n)(\s+[*-].*?)(?=\n)/g, (match, p1, p2) => {
+        .replace(/(^|\n)(\[ \t]+[*-].*?)(?=\n)/g, (match, p1, p2) => {
             return `\n   ${markList2(p2)}`
         }) // List 2
         .replace(/(^|\n)([*-].*?)(?=\n)/g, (match, p1, p2) => {
@@ -63,12 +63,12 @@ function markP2(input: string): string {
 function markList1(input: string): string {
     console.log("Editing List 1:", input)
     const marker = config.format.list.first ?? `–`;
-    return input.replace(/^([-*])\s/g, `${marker} `);
+    return input.replace(/^([-*])[ \t]/g, `${marker} `);
 }
 
 function markList2(input: string): string {
     console.log("Editing List 2:", input)
     const marker = config.format.list.second ?? `–`;
     return input
-        .replace(/^\s+([-*])\s/g, `${marker} `);
+        .replace(/^[ \t]+([-*])[ \t]/g, `${marker} `);
 }
