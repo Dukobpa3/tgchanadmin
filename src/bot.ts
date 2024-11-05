@@ -2,9 +2,11 @@ import {Bot, GrammyError, HttpError} from "grammy";
 import {config} from "../config.js";
 import {convertUlyssesToTelegramHtml} from "./parser.js";
 import {ContentType, TgData} from "./middleware.js";
+import {InputFile, InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo} from "grammy/types";
 
 export class DBot {
     bot: Bot
+
 
     constructor(BOT_TOKEN: string) {
         if (config) {
@@ -46,42 +48,62 @@ export class DBot {
 
         let text2 = convertUlyssesToTelegramHtml(tgData.content)
 
+        return this.bot.api
+            .sendMessage(tgData.channel, text2, {parse_mode: "HTML"});
+    }
 
-        if (tgData.message) {
-            console.log("Trying to edit:", tgData.channel, tgData.message, tgData.contentType);
-            if (tgData.contentType > 0) {
+    async SendMediaMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
+
+        const media = tgData.media as InputFile;
+        if (media === undefined) return;
+
+        let text2 = convertUlyssesToTelegramHtml(tgData.content)
+
+        switch (tgData.contentType) {
+            case ContentType.photo:
                 return this.bot.api
-                    .editMessageCaption(tgData.channel, tgData.message, {parse_mode: "HTML", caption: text2});
-
-            } else {
+                    .sendPhoto(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+            case ContentType.video:
                 return this.bot.api
-                    .editMessageText(tgData.channel, tgData.message, text2, {parse_mode: "HTML"});
-            }
-        } else {
-            console.log("Trying to send:", tgData.channel, tgData.message, ContentType[tgData.contentType]);
-            switch (tgData.contentType) {
-                case ContentType.text:
-                    return this.bot.api
-                        .sendMessage(tgData.channel, text2, {parse_mode: "HTML"});
-                case ContentType.photo:
-                    return this.bot.api
-                        .sendPhoto(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.video:
-                    return this.bot.api
-                        .sendVideo(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.audio:
-                    return this.bot.api
-                        .sendAudio(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.document:
-                    return this.bot.api
-                        .sendDocument(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.group:
-                    tgData.media[0].caption = text2;
-                    return this.bot.api
-                        .sendMediaGroup(tgData.channel, tgData.media);
-            }
-
+                    .sendVideo(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+            case ContentType.audio:
+                return this.bot.api
+                    .sendAudio(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+            case ContentType.document:
+                return this.bot.api
+                    .sendDocument(tgData.channel, media, {parse_mode: "HTML", caption: text2});
         }
     }
 
+    async SendGroupMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
+        if (tgData.media === undefined) return
+
+        const media = tgData.media as Array<InputMediaDocument | InputMediaAudio | InputMediaPhoto | InputMediaVideo>
+        if (media === undefined) return;
+
+        media[0].caption = convertUlyssesToTelegramHtml(tgData.content);
+        return this.bot.api.sendMediaGroup(tgData.channel, media);
+    }
+
+    async EditMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
+        if (tgData.message === undefined) return
+
+        let text2 = convertUlyssesToTelegramHtml(tgData.content)
+
+        console.log("Trying to edit:", tgData.channel, tgData.message, tgData.contentType);
+        if (tgData.contentType != ContentType.text) {
+            return this.bot.api
+                .editMessageCaption(tgData.channel, tgData.message, {parse_mode: "HTML", caption: text2});
+
+        } else {
+            return this.bot.api
+                .editMessageText(tgData.channel, tgData.message, text2, {parse_mode: "HTML"});
+        }
+    }
 }

@@ -4,7 +4,7 @@ import {DBot} from "./bot";
 import multer from "multer";
 import fs from "fs";
 import {config, env} from "../config.js";
-import {ContentType, ulyssesTgMiddleware} from "./middleware.js";
+import {ContentType, TgData, ulyssesTgMiddleware} from "./middleware.js";
 
 const memoryStorage = multer.memoryStorage();
 const diskStorage = multer.diskStorage({
@@ -98,17 +98,11 @@ export class DServer {
 
         const tgData = req.tgData;
         console.log("Sending content:", req.tgData.content)
-        return this.bot
-            .SendMessage(tgData)
-            .then((response: any) => {
-                console.log("sent to bot", response);
 
-                res.status(201).json({
-                    ok: response === true,
-                    c: response.chat.id,
-                    m: response.message_id,
-                    t: ContentType[tgData.contentType].toLowerCase()
-                })
+        return this.chooseRightSendingMethod(tgData)
+            .then((result) => {
+                console.log("sent to bot", result);
+                res.status(201).json(result)
             })
             .catch((err) => {
                 console.log(err);
@@ -169,6 +163,58 @@ export class DServer {
             res.status(500).json({
                 message: "Internal Server Error!"
             });
+        }
+    }
+
+    async chooseRightSendingMethod(tgData: TgData) {
+        const res: {
+            ok?: boolean
+            c?: number
+            m?: number
+            t?: string
+        } = {}
+
+        if (tgData.message) {
+            return this.bot
+                .EditMessage(tgData)
+                .then((response) => {
+                    res.t = ContentType[tgData.contentType]
+                    if (response === true) {
+                        res.ok = true;
+                    } else {
+                        res.c = response?.chat.id;
+                        res.m = response?.message_id;
+                    }
+                    return res;
+                })
+        } else if (tgData.contentType == ContentType.text) {
+            return this.bot
+                .SendMessage(tgData)
+                .then((response) => {
+                    res.t = ContentType[tgData.contentType];
+                    res.c = response?.chat.id;
+                    res.m = response?.message_id;
+                    return res;
+                })
+        } else if (tgData.contentType == ContentType.group) {
+            return this.bot
+                .SendGroupMessage(tgData)
+                .then((response) => {
+                    const first = response ? response[0] : undefined;
+                    res.c = first?.chat.id;
+                    res.m = first?.message_id;
+                    res.t = ContentType[tgData.contentType];
+                    return res;
+                })
+        } else {
+            return this.bot
+                .SendMediaMessage(tgData)
+                .then((response) => {
+                    res.c = response?.chat.id;
+                    res.m = response?.message_id;
+                    res.t = ContentType[tgData.contentType];
+                    return res;
+                })
         }
     }
 }

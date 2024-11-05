@@ -51,12 +51,12 @@ function escapeHtml(input: string): string {
 }
 
 function markP1(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.first} `: ``;
+    const marker = config.format.header.first ? `${config.format.header.first} ` : ``;
     return `${marker}${input}`;
 }
 
 function markP2(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.second} `: ``;
+    const marker = config.format.header.first ? `${config.format.header.second} ` : ``;
     return `${marker}${input}`;
 }
 

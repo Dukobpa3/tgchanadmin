@@ -3,19 +3,17 @@ import {env} from "../config.js";
 import fs from "fs";
 import AdmZip from "adm-zip";
 import mime from "mime-types";
-import {InputFile, InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo} from "grammy/types";
+import {InputFile, InputMedia,} from "grammy/types";
 import {InputMediaBuilder} from "grammy";
 
-export type InputMedia = InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo
-
 export enum ContentType {
-    text, // simple message without media
-    media, // generic media type
-    photo,
-    video,
-    audio,
-    document, // any attachment
-    group,
+    text = 'text', // simple message without media
+    media = 'media', // generic media type
+    photo = 'photo',
+    video = 'video',
+    audio = 'audio',
+    document = 'document', // any attachment
+    group = 'group',
 }
 
 export interface TgData {
@@ -23,7 +21,7 @@ export interface TgData {
     message: number | undefined;
     content: string | undefined;
     contentType: ContentType;
-    media: ReadonlyArray<InputMedia>;
+    media?: InputFile | ReadonlyArray<InputMedia>;
 }
 
 declare global {
@@ -93,7 +91,12 @@ export async function ulyssesTgMiddleware(req: Request, res: Response, next: Nex
         message: parseInt(req.body.message),
         content: text,
         contentType: getContentType(req.body.media, media),
-        media: media,
+    }
+
+    if (media.length > 0) {
+        req.tgData.media = media.length > 1
+            ? media
+            : media[0].media as InputFile;
     }
 
     next();
@@ -109,4 +112,3 @@ function getContentType(clientSign: string, media: Array<InputMedia>) {
     }
     return ContentType.group;
 }
-
