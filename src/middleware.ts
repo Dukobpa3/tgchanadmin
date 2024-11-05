@@ -9,13 +9,13 @@ import {InputMediaBuilder} from "grammy";
 export type InputMedia = InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo
 
 export enum ContentType {
-    Text, // simple message without media
-    Media, // generic media type
-    Photo,
-    Video,
-    Audio,
-    Document, // any attachment
-    Group,
+    text, // simple message without media
+    media, // generic media type
+    photo,
+    video,
+    audio,
+    document, // any attachment
+    group,
 }
 
 export interface TgData {
@@ -100,46 +100,13 @@ export async function ulyssesTgMiddleware(req: Request, res: Response, next: Nex
 }
 
 function getContentType(clientSign: string, media: Array<InputMedia>) {
-    switch (clientSign) {
-        case 'm':
-            return ContentType.Media;
-        case 'p':
-            return ContentType.Photo;
-        case 'v':
-            return ContentType.Video;
-        case 'a':
-            return ContentType.Audio;
-        default:
-            return getReversContentType(media);
+    if (clientSign in ContentType) {
+        return ContentType[clientSign as keyof typeof ContentType]
+    } else if (media.length === 0) {
+        return ContentType.text;
+    } else if (media.length === 1) {
+        return ContentType[media[0].type as keyof typeof ContentType];
     }
+    return ContentType.group;
 }
 
-function getReversContentType(media: Array<InputMedia>) {
-    // todo check if there is only media or with documents
-
-    let firstElemType: ContentType;
-
-    switch (media[0].type) {
-        case 'photo':
-            firstElemType = ContentType.Photo;
-            break;
-        case 'video':
-            firstElemType = ContentType.Video;
-            break;
-        case 'audio':
-            firstElemType = ContentType.Audio;
-            break;
-        case "document":
-            firstElemType = ContentType.Document;
-            break;
-    }
-
-    switch (media.length) {
-        case 0:
-            return ContentType.Text;
-        case 1:
-            return firstElemType;
-        default:
-            return ContentType.Group;
-    }
-}

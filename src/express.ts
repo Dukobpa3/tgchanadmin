@@ -4,7 +4,7 @@ import {DBot} from "./bot";
 import multer from "multer";
 import fs from "fs";
 import {config, env} from "../config.js";
-import {ulyssesTgMiddleware} from "./middleware.js";
+import {ContentType, ulyssesTgMiddleware} from "./middleware.js";
 
 const memoryStorage = multer.memoryStorage();
 const diskStorage = multer.diskStorage({
@@ -107,7 +107,7 @@ export class DServer {
                     ok: response === true,
                     c: response.chat.id,
                     m: response.message_id,
-                    t: tgData.contentType > 0 ? 'media' : undefined
+                    t: ContentType[tgData.contentType].toLowerCase()
                 })
             })
             .catch((err) => {

@@ -60,22 +60,22 @@ export class DBot {
         } else {
             console.log("Trying to send:", tgData.channel, tgData.message, ContentType[tgData.contentType]);
             switch (tgData.contentType) {
-                case ContentType.Text:
+                case ContentType.text:
                     return this.bot.api
                         .sendMessage(tgData.channel, text2, {parse_mode: "HTML"});
-                case ContentType.Photo:
+                case ContentType.photo:
                     return this.bot.api
                         .sendPhoto(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.Video:
+                case ContentType.video:
                     return this.bot.api
                         .sendVideo(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.Audio:
+                case ContentType.audio:
                     return this.bot.api
                         .sendAudio(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.Document:
+                case ContentType.document:
                     return this.bot.api
                         .sendDocument(tgData.channel, tgData.media[0].media, {parse_mode: "HTML", caption: text2});
-                case ContentType.Group:
+                case ContentType.group:
                     tgData.media[0].caption = text2;
                     return this.bot.api
                         .sendMediaGroup(tgData.channel, tgData.media);
