@@ -1,16 +1,18 @@
 import {Bot, GrammyError, HttpError} from "grammy";
-import {config, Config} from "../config.js";
+import {config} from "../config.js";
+import {convertUlyssesToTelegramHtml} from "./parser.js";
+import {ContentType, TgData} from "./middleware.js";
+import {InputFile, InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo} from "grammy/types";
 
 export class DBot {
     bot: Bot
-    config: Config
 
-    constructor(BOT_TOKEN: string, config: Config) {
+
+    constructor(BOT_TOKEN: string) {
         if (config) {
             console.log(`Registered ${Object.keys(config.collection).length} channels amount`);
         }
 
-        this.config = config;
         this.bot = new Bot(BOT_TOKEN);
         this.initialize();
     }
@@ -40,111 +42,68 @@ export class DBot {
         this.bot.stop()
     }
 
-    async SendMessage(text: string | undefined, channel: number | undefined, message: number|undefined) {
-        if (text === undefined) return
-        if (channel === undefined) return
+    async SendMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
 
-        let text2 = convertUlyssesToTelegramHtml(text)
-        console.log("Trying to send:", channel, message, text2);
+        let text2 = convertUlyssesToTelegramHtml(tgData.content)
 
-        if (message) {
-            console.log("Trying to edit:", channel, message);
-            return this.bot.api
-                .editMessageText(channel, message, text2, {parse_mode: "HTML"})
-                .then((resp) => {
-                    console.log();
-                    return resp;
-                });
-        } else {
-            return this.bot.api
-                .sendMessage(channel, text2, {parse_mode: "HTML"})
-                .then((message) => {
-                    console.log(message.from, message.chat, message.message_id);
-                    return message;
-                });
+        return this.bot.api
+            .sendMessage(tgData.channel, text2, {parse_mode: "HTML"});
+    }
+
+    async SendMediaMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
+
+        const media = tgData.media as InputFile;
+        if (media === undefined) return;
+
+        let text2 = convertUlyssesToTelegramHtml(tgData.content)
+
+        switch (tgData.contentType) {
+            case ContentType.photo:
+                return this.bot.api
+                    .sendPhoto(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+            case ContentType.video:
+                return this.bot.api
+                    .sendVideo(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+            case ContentType.audio:
+                return this.bot.api
+                    .sendAudio(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+            case ContentType.document:
+                return this.bot.api
+                    .sendDocument(tgData.channel, media, {parse_mode: "HTML", caption: text2});
         }
     }
-}
 
-function getMessageId(text: string, chat: string): string {
-    const reg = new RegExp(`<!--.*?ulysses-tg\\s+${chat}:(\\d+).*?-->`);
-    const match = text.match(reg)
-    console.log("Message id match:", match)
-    return match ? match[1] : "";
-}
+    async SendGroupMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
+        if (tgData.media === undefined) return
 
-function convertUlyssesToTelegramHtml(input: string): string {
-    return input
-        .replace(/\s*<!--.*ulysses-tg.*-->\s*/g, "\n") // clean technical information
+        const media = tgData.media as Array<InputMediaDocument | InputMediaAudio | InputMediaPhoto | InputMediaVideo>
+        if (media === undefined) return;
 
-        .replace(/~(.*?)~/g, (match, code) => {
-            return `<pre>${escapeHtml(code)}</pre>`
-        }) // Preformat
-        .replace(/```(.*?)\n([\s\S]*?)```/g, (match, lang, code) => {
-            return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
-        }) // Code block
-        .replace(/`(.*?)`/g, (match, code) => {
-            return `<code>${escapeHtml(code)}</code>`
-        }) // Inline code
-        .replace(/(^|\n)(>.*?\n)+/g, (match) => {
-            return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
-        }) // Quote
+        media[0].caption = convertUlyssesToTelegramHtml(tgData.content);
+        return this.bot.api.sendMediaGroup(tgData.channel, media);
+    }
 
-        .replace(/\|\|(.*?)\|\|/g, '<span class="tg-spoiler">$1</span>') // Spoiler
-        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
-        .replace(/__(.*?)__/g, '<u>$1</u>') // Underline
-        .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
-        .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
+    async EditMessage(tgData: TgData) {
+        if (tgData.content === undefined) return
+        if (tgData.channel === undefined) return
+        if (tgData.message === undefined) return
 
-        .replace(/(^|\n)#{2,}[ \t](.*?)\n/g, (match, p1, p2) => {
-            return `\n<strong>${markP2(p2)}</strong>\n`
-        }) // Header 2
-        .replace(/(^|\n)#[ \t](.*?)\n/g, (match, p1, p2) => {
-            return `\n<strong>${markP1(p2)}</strong>\n`
-        }) // Header 1
+        let text2 = convertUlyssesToTelegramHtml(tgData.content)
 
-        .replace(/(^|\n)([ \t]+[*-].*?)(?=\n)/g, (match, p1, p2) => {
-            return `\n   ${markList2(p2)}`
-        }) // List 2
-        .replace(/(^|\n)([*-].*?)(?=\n)/g, (match, p1, p2) => {
-            return `\n ${markList1(p2)}`
-        }) // List 1
+        console.log("Trying to edit:", tgData.channel, tgData.message, tgData.contentType);
+        if (tgData.contentType != ContentType.text) {
+            return this.bot.api
+                .editMessageCaption(tgData.channel, tgData.message, {parse_mode: "HTML", caption: text2});
 
-        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
-
-        // Cleanup zone
-        .replace(/\n\n\n/g, '\n\n')
-        .replace(/<\/pre>\n\n/g, '</pre>\n')
-        .trim();
-
-}
-
-function escapeHtml(input: string): string {
-    return input
-        .replace(/&/g, '&amp;') // Change & to &amp;
-        .replace(/</g, '&lt;') // Change < to &lt;
-        .replace(/>/g, '&gt;'); // Change > to &gt;
-}
-
-function markP1(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.first} ` : ``;
-    return `${marker}${input}`;
-}
-
-function markP2(input: string): string {
-    const marker = config.format.header.first ? `${config.format.header.second} ` : ``;
-    return `${marker}${input}`;
-}
-
-function markList1(input: string): string {
-    console.log("Editing List 1:", input)
-    const marker = config.format.list.first ?? `–`;
-    return input.replace(/^([-*])\s/g, `${marker} `);
-}
-
-function markList2(input: string): string {
-    console.log("Editing List 2:", input)
-    const marker = config.format.list.second ?? `–`;
-    return input
-        .replace(/^\s+([-*])\s/g, `${marker} `);
+        } else {
+            return this.bot.api
+                .editMessageText(tgData.channel, tgData.message, text2, {parse_mode: "HTML"});
+        }
+    }
 }
