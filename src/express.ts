@@ -2,10 +2,9 @@ import express, {Application, Request, Response} from "express";
 import cors, {CorsOptions} from "cors";
 import {DBot} from "./bot";
 import multer from "multer";
-import AdmZip from "adm-zip";
-import mime from 'mime-types';
 import fs from "fs";
-import {env} from "../config.js";
+import {config, env} from "../config.js";
+import {ContentType, TgData, ulyssesTgMiddleware} from "./middleware.js";
 
 const memoryStorage = multer.memoryStorage();
 const diskStorage = multer.diskStorage({
@@ -45,6 +44,7 @@ export class DServer {
         this.app.use(cors(corsOptions));
         this.app.use(express.json());
         this.app.use(express.urlencoded({extended: false}));
+        //this.app.use(ulyssesTgMiddleware);
     }
 
     initializeRoutes() {
@@ -54,7 +54,9 @@ export class DServer {
             });
 
         // Create a new Post
-        this.app.post("/api", upload.single('data'),
+        this.app.post("/api",
+            upload.single('data'),
+            ulyssesTgMiddleware,
             (req, res) => this.create(req, res));
 
         // Retrieve all available channels
@@ -86,66 +88,36 @@ export class DServer {
 
 
     async create(req: Request, res: Response) {
-        console.log("Received data is:", req.body)
-
-        if (!req.file)
-            res.status(400).send('No file uploaded.');
-        else {
-            console.log("Received file is:", req.file.size, req.file.originalname, req.file.mimetype)
-
-            let fileBuffer;
-            if (env.botUploadPath === "") {
-                fileBuffer = req.file.buffer;
-            } else {
-                fileBuffer = fs.readFileSync(req.file.path);
-            }
-
-            const zip = new AdmZip(fileBuffer);
-            const zipEntries = zip.getEntries();
-            console.log("Entries in archive:", zipEntries.length)
-
-            let content: string | undefined = undefined;
-            zipEntries.forEach(entry => {
-                console.log("Unzipped entry", entry.entryName)
-                if (!entry.isDirectory) {
-                    const mimeType = mime.lookup(entry.name);
-                    if (mimeType && (mimeType as string).startsWith("text/")) {
-                        content = zip.readAsText(entry);
-                    }
-                    // else if(mimeType.) { if media
-                    //
-                    // }
-                }
-            });
-
-            console.log("Sending content:", content)
-            this.bot
-                .SendMessage(content, parseInt(req.body.channel), parseInt(req.body.message))
-                .then((message) => {
-                    console.log("sent to bot");
-                    if (message === true) res.status(201).json({
-                        ok: message,
-                    });
-                    else res.status(201).json({
-                        m: message?.message_id,
-                        c: message?.chat.id,
-                    });
-                })
-                .catch((err) => {
-                    console.log(err);
-                    res.status(500).json({
-                        code: err.error_code,
-                        name: err.name,
-                        description: err.description
-                    })
-                });
+        if (!req.tgData) {
+            res.status(500).json({
+                code: 500,
+                message: "Empty data to send"
+            })
+            return;
         }
+
+        const tgData = req.tgData;
+        console.log("Sending content:", req.tgData.content)
+
+        return this.chooseRightSendingMethod(tgData)
+            .then((result) => {
+                console.log("sent to bot", result);
+                res.status(201).json(result)
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).json({
+                    code: err.error_code,
+                    name: err.name,
+                    description: err.description
+                })
+            });
     }
 
     async findAll(req: Request, res: Response) {
         try {
             res.status(200).json(
-                this.bot.config.collection
+                config.collection
             );
         } catch (err) {
             res.status(500).json({
@@ -191,6 +163,58 @@ export class DServer {
             res.status(500).json({
                 message: "Internal Server Error!"
             });
+        }
+    }
+
+    async chooseRightSendingMethod(tgData: TgData) {
+        const res: {
+            ok?: boolean
+            c?: number
+            m?: number
+            t?: string
+        } = {}
+
+        if (tgData.message) {
+            return this.bot
+                .EditMessage(tgData)
+                .then((response) => {
+                    res.t = ContentType[tgData.contentType]
+                    if (response === true) {
+                        res.ok = true;
+                    } else {
+                        res.c = response?.chat.id;
+                        res.m = response?.message_id;
+                    }
+                    return res;
+                })
+        } else if (tgData.contentType == ContentType.text) {
+            return this.bot
+                .SendMessage(tgData)
+                .then((response) => {
+                    res.t = ContentType[tgData.contentType];
+                    res.c = response?.chat.id;
+                    res.m = response?.message_id;
+                    return res;
+                })
+        } else if (tgData.contentType == ContentType.group) {
+            return this.bot
+                .SendGroupMessage(tgData)
+                .then((response) => {
+                    const first = response ? response[0] : undefined;
+                    res.c = first?.chat.id;
+                    res.m = first?.message_id;
+                    res.t = ContentType[tgData.contentType];
+                    return res;
+                })
+        } else {
+            return this.bot
+                .SendMediaMessage(tgData)
+                .then((response) => {
+                    res.c = response?.chat.id;
+                    res.m = response?.message_id;
+                    res.t = ContentType[tgData.contentType];
+                    return res;
+                })
         }
     }
 }

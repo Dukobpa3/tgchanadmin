@@ -26,12 +26,14 @@ export interface Config {
 
 interface Env {
     botToken: string;
+    botIgnoreStart: boolean;
     port: number;
     botUploadPath: string;
 }
 
 export const env: Env = new class implements Env {
     botToken: string = "";
+    botIgnoreStart: boolean = false;
     port: number = 0;
     botUploadPath: string = "";
 }
@@ -41,6 +43,8 @@ export const config = loadConfig('config.yml');
 env.botToken = process.env.BOT_TOKEN ?? (() => {
     throw new Error("BOT_TOKEN is missing in .env");
 })();
+
+env.botIgnoreStart = process.env.BOT_IGNORE_START === 'true';
 
 env.port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 
