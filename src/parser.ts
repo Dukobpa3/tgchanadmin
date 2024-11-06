@@ -16,11 +16,16 @@ export function convertUlyssesToTelegramHtml(input: string): string {
             return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
         }) // Quote
 
+        .replace(/!?\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
+
         .replace(/\|\|(.*?)\|\|/g, '<span class="tg-spoiler">$1</span>') // Spoiler
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
-        .replace(/__(.*?)__/g, '<u>$1</u>') // Underline
-        .replace(/_(.*?)_/g, '<i>$1</i>') // Italic
-        .replace(/~(.*?)~/g, '<s>$1</s>') // Stroke
+        .replace(/(<a\b[^>]*>.*?<\/a>)|__(.*?)__/g, (match, link, underline) =>
+            link ? link : `<u>${underline}</u>`) // Underline
+        .replace(/(<a\b[^>]*>.*?<\/a>)|_(.*?)_/g, (match, link, italic) =>
+            link ? link : `<i>${italic}</i>`) // Italic
+        .replace(/(<a\b[^>]*>.*?<\/a>)|~(.*?)~/g, (match, link, stroke) =>
+            link ? link : `<s>${stroke}</s>`) // Stroke
 
         .replace(/(^|\n)#{2,}[ \t](.*?)\n/g, (match, p1, p2) => {
             return `\n<strong>${markP2(p2)}</strong>\n`
@@ -36,7 +41,7 @@ export function convertUlyssesToTelegramHtml(input: string): string {
             return `\n ${markList1(p2)}`
         }) // List 1
 
-        .replace(/!?\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
+
 
         .replace(/\n\n\n/g, '\n\n') // Prune new lines
         .replace(/<\/pre>\n\n/g, '</pre>\n'); // Prune new lines
