@@ -29,7 +29,7 @@ export function convertUlyssesToTelegramHtml(input: string): string {
             return `\n<strong>${markP1(p2)}</strong>\n`
         }) // Header 1
 
-        .replace(/(^|\n)(\[ \t]+[*-].*?)(?=\n)/g, (match, p1, p2) => {
+        .replace(/(^|\n)([ \t]+[*-].*?)(?=\n)/g, (match, p1, p2) => {
             return `\n   ${markList2(p2)}`
         }) // List 2
         .replace(/(^|\n)([*-].*?)(?=\n)/g, (match, p1, p2) => {
