@@ -182,7 +182,7 @@ export class DServer {
                     if (response === true) {
                         res.ok = true;
                     } else {
-                        res.c = response?.chat.id;
+                        res.c = tgData.channel;
                         res.m = response?.message_id;
                     }
                     return res;
@@ -192,7 +192,7 @@ export class DServer {
                 .SendMessage(tgData)
                 .then((response) => {
                     res.t = ContentType[tgData.contentType];
-                    res.c = response?.chat.id;
+                    res.c = tgData.channel;
                     res.m = response?.message_id;
                     return res;
                 })
@@ -200,9 +200,9 @@ export class DServer {
             return this.bot
                 .SendGroupMessage(tgData)
                 .then((response) => {
-                    const first = response ? response[0] : undefined;
-                    res.c = first?.chat.id;
-                    res.m = first?.message_id;
+                    const first = Array.isArray(response) ? response[0] : undefined;
+                    res.c = tgData.channel;
+                    res.m = first?.message_id ?? response?.message_id;
                     res.t = ContentType[tgData.contentType];
                     return res;
                 })
@@ -210,7 +210,7 @@ export class DServer {
             return this.bot
                 .SendMediaMessage(tgData)
                 .then((response) => {
-                    res.c = response?.chat.id;
+                    res.c = tgData.channel;
                     res.m = response?.message_id;
                     res.t = ContentType[tgData.contentType];
                     return res;

@@ -58,7 +58,10 @@ export async function ulyssesTgMiddleware(req: Request, res: Response, next: Nex
 
     let media = new Array<InputMedia>()
     let text: string = "";
-    zipEntries.forEach(entry => {
+
+    const sortedEntries = zipEntries.sort((a, b) => a.entryName.localeCompare(b.entryName));
+
+    sortedEntries.forEach(entry => {
         console.log("Unzipped entry", entry.entryName)
         if (!entry.isDirectory) {
             const mimeType = mime.lookup(entry.name);

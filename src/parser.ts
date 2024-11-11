@@ -16,7 +16,8 @@ export function convertUlyssesToTelegramHtml(input: string): string {
             return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
         }) // Quote
 
-        .replace(/!?\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
+        .replace(/!\[(.*?)\]\((.*?)\)/g, '') // Image
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>') // Link
 
         .replace(/\|\|(.*?)\|\|/g, '<span class="tg-spoiler">$1</span>') // Spoiler
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold
