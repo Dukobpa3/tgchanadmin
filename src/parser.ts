@@ -12,7 +12,7 @@ export function convertUlyssesToTelegramHtml(input: string): string {
         .replace(/`(.*?)`/g, (match, code) => {
             return `<code>${escapeHtml(code)}</code>`
         }) // Inline code
-        .replace(/(^|\n)(>.*?\n)+/g, (match) => {
+        .replace(/(^|\n)(>.*?[\n$])+/g, (match) => {
             return `\n<blockquote>${match.replace(/^> ?/gm, '').trim()}</blockquote>\n`
         }) // Quote
 

@@ -68,6 +68,9 @@ export class DBot {
             case ContentType.video:
                 return this.bot.api
                     .sendVideo(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+            case ContentType.animation:
+                return this.bot.api
+                    .sendAnimation(tgData.channel, media, {parse_mode: "HTML", caption: text2});
             case ContentType.audio:
                 return this.bot.api
                     .sendAudio(tgData.channel, media, {parse_mode: "HTML", caption: text2});
