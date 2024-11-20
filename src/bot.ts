@@ -59,7 +59,8 @@ export class DBot {
         const media = tgData.media as InputFile;
         const text2 = convertUlyssesToTelegramHtml(tgData.content);
 
-        let options: Other<RawApi, "sendPhoto", "photo" | "chat_id"> = {parse_mode: "HTML"};
+        type other = Other<RawApi, "sendPhoto", "photo" | "chat_id">;
+        let options: other = {parse_mode: "HTML"};
 
         const textByteLength = Buffer.byteLength(text2, 'utf-8');
         if (textByteLength < 1024) {
@@ -82,15 +83,15 @@ export class DBot {
 
         switch (tgData.contentType) {
             case ContentType.photo:
-                return sendMedia(this.bot.api.sendPhoto);
+                return sendMedia((id:number, media:InputFile, options:other) => this.bot.api.sendPhoto(id, media, options));
             case ContentType.video:
-                return sendMedia(this.bot.api.sendVideo);
+                return sendMedia((id:number, media:InputFile, options:other) => this.bot.api.sendVideo(id, media, options));
             case ContentType.animation:
-                return sendMedia(this.bot.api.sendAnimation);
+                return sendMedia((id:number, media:InputFile, options:other) => this.bot.api.sendAnimation(id, media, options));
             case ContentType.audio:
-                return sendMedia(this.bot.api.sendAudio);
+                return sendMedia((id:number, media:InputFile, options:other) => this.bot.api.sendAudio(id, media, options));
             case ContentType.document:
-                return sendMedia(this.bot.api.sendDocument);
+                return sendMedia((id:number, media:InputFile, options:other) => this.bot.api.sendDocument(id, media, options));
         }
     }
 
