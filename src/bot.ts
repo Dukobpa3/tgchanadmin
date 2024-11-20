@@ -85,6 +85,8 @@ export class DBot {
                 return sendMedia(this.bot.api.sendPhoto);
             case ContentType.video:
                 return sendMedia(this.bot.api.sendVideo);
+            case ContentType.animation:
+                return sendMedia(this.bot.api.sendAnimation);
             case ContentType.audio:
                 return sendMedia(this.bot.api.sendAudio);
             case ContentType.document:

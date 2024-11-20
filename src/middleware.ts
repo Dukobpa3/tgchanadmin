@@ -12,6 +12,7 @@ export enum ContentType {
     photo = 'photo',
     video = 'video',
     audio = 'audio',
+    animation = 'animation',
     document = 'document', // any attachment
     group = 'group',
 }
@@ -82,6 +83,8 @@ export async function ulyssesTgMiddleware(req: Request, res: Response, next: Nex
                 media.push(InputMediaBuilder.video(new InputFile(buffer, entry.name), {parse_mode: "HTML"}));
             } else if (mimeType.startsWith("audio/")) {
                 media.push(InputMediaBuilder.audio(new InputFile(buffer, entry.name), {parse_mode: "HTML"}));
+            } else if (mimeType.startsWith("animation/")) {
+                media.push(InputMediaBuilder.animation(new InputFile(buffer, entry.name), {parse_mode: "HTML"}));
             } else {
                 // todo pass documents for now
                 //media.push(InputMediaBuilder.document(new InputFile(buffer), {parse_mode: "HTML"}));
