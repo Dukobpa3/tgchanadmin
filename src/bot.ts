@@ -1,8 +1,9 @@
-import {Bot, GrammyError, HttpError} from "grammy";
+import {Bot, GrammyError, HttpError, RawApi} from "grammy";
 import {config} from "../config.js";
 import {convertUlyssesToTelegramHtml} from "./parser.js";
 import {ContentType, TgData} from "./middleware.js";
 import {InputFile, InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo} from "grammy/types";
+import {Other} from "grammy/out/core/api";
 
 export class DBot {
     bot: Bot
@@ -53,30 +54,43 @@ export class DBot {
     }
 
     async SendMediaMessage(tgData: TgData) {
-        if (tgData.content === undefined) return
-        if (tgData.channel === undefined) return
+        if (!tgData.content || !tgData.channel || !tgData.media) return;
 
         const media = tgData.media as InputFile;
-        if (media === undefined) return;
+        const text2 = convertUlyssesToTelegramHtml(tgData.content);
 
-        let text2 = convertUlyssesToTelegramHtml(tgData.content)
+        let options: Other<RawApi, "sendPhoto", "photo" | "chat_id"> = {parse_mode: "HTML"};
+
+        const textByteLength = Buffer.byteLength(text2, 'utf-8');
+        if (textByteLength < 1024) {
+            options.caption = text2;
+        }
+
+        const sendMedia = (sendMethod: Function) =>
+            sendMethod(tgData.channel, media, options)
+                .then((msg: any) => {
+                    if (textByteLength >= 1024) {
+                        return this.bot.api.sendMessage(tgData.channel, text2, {
+                            parse_mode: "HTML",
+                            disable_notification: true,
+                            reply_to_message_id: msg.message_id
+                        });
+                    } else {
+                        return Promise.resolve(msg)
+                    }
+                });
 
         switch (tgData.contentType) {
             case ContentType.photo:
-                return this.bot.api
-                    .sendPhoto(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+                return sendMedia(this.bot.api.sendPhoto);
             case ContentType.video:
-                return this.bot.api
-                    .sendVideo(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+                return sendMedia(this.bot.api.sendVideo);
             case ContentType.animation:
-                return this.bot.api
-                    .sendAnimation(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+                return sendMedia(this.bot.api.sendAnimation);
             case ContentType.audio:
-                return this.bot.api
-                    .sendAudio(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+                return sendMedia(this.bot.api.sendAudio);
             case ContentType.document:
-                return this.bot.api
-                    .sendDocument(tgData.channel, media, {parse_mode: "HTML", caption: text2});
+                return sendMedia(this.bot.api.sendDocument);
         }
     }
 
@@ -88,8 +102,25 @@ export class DBot {
         const media = tgData.media as Array<InputMediaDocument | InputMediaAudio | InputMediaPhoto | InputMediaVideo>
         if (media === undefined) return;
 
-        media[0].caption = convertUlyssesToTelegramHtml(tgData.content);
-        return this.bot.api.sendMediaGroup(tgData.channel, media);
+        let text2 = convertUlyssesToTelegramHtml(tgData.content)
+
+        const textByteLength = Buffer.byteLength(text2, 'utf-8');
+        if (textByteLength < 1024) {
+            media[0].caption = text2
+        }
+
+        return this.bot.api.sendMediaGroup(tgData.channel, media)
+            .then((msg: any) => {
+                if (textByteLength >= 1024) {
+                    return this.bot.api.sendMessage(tgData.channel, text2, {
+                        parse_mode: "HTML",
+                        disable_notification: true,
+                        reply_parameters: {message_id: msg[0].message_id}
+                    })
+                } else {
+                    return Promise.resolve(msg)
+                }
+            });
     }
 
     async EditMessage(tgData: TgData) {
@@ -109,4 +140,9 @@ export class DBot {
                 .editMessageText(tgData.channel, tgData.message, text2, {parse_mode: "HTML"});
         }
     }
+}
+
+function isTooLong(text: string): boolean {
+    const textByteLength = Buffer.byteLength(text, 'utf-8');
+    return textByteLength >= 1024
 }
